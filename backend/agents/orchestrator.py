@@ -1,22 +1,55 @@
-from backend.agents.technical_agent import TechnicalAgent
-from backend.agents.news_agent import NewsAgent
-from backend.agents.macro_agent import MacroAgent
-from backend.agents.risk_agent import RiskAgent
+# backend/agents/orchestrator.py
+
+from backend.agents.context_agents import (
+    TechnicalContext,
+    NewsContext,
+    MacroContext,
+    RiskEvaluator,
+)
 from backend.agents.synthesis_agent import SynthesisAgent
 
-class SymbolAnalysisOrchestrator:
-    async def run(self, symbol: str, horizon: str) -> dict:
-        technical = TechnicalAgent().run(symbol)
-        news = await NewsAgent().run(symbol)
-        macro = await MacroAgent().run()
-        risk = RiskAgent().evaluate(technical, news, macro)
 
-        result = await SynthesisAgent().run(
-            symbol, horizon, technical, news, macro, risk
+class SymbolAnalysisOrchestrator:
+    """
+    Orchestrates context generation + LLM synthesis.
+    """
+
+    async def run(self, symbol: str) -> dict:
+        # ----- Build contexts -----
+        technical = await TechnicalContext().run(symbol)
+        news = await NewsContext().run(symbol)
+        macro = await MacroContext().run()
+
+        # ----- Optional deterministic evaluation -----
+        risk_meta = RiskEvaluator().evaluate(
+            technical=technical,
+            news=news,
+            macro=macro,
         )
 
-        # Deterministic override (FINAL GUARDRAIL)
-        if not risk["allow_trade"]:
-            result["trade_idea"]["direction"] = "no_trade"
+        # ----- Prepare text context for LLM -----
+        technical_text = f"""
+Trend: {technical['trend']}
+Momentum: {technical['momentum']}
+Support: {technical['support']}
+Resistance: {technical['resistance']}
+"""
 
-        return result
+        news_text = news.get("news_context") or "No significant recent news."
+
+        macro_text = macro.get("macro_context") or "Macro conditions neutral."
+
+        # ----- LLM synthesis -----
+        synthesis = await SynthesisAgent().run(
+            symbol=symbol,
+            technical_context=technical_text,
+            news_context=news_text,
+            macro_context=macro_text,
+        )
+
+        # ----- Attach deterministic metadata -----
+        synthesis["confidence_meta"] = risk_meta
+
+        return {
+            "analysis": synthesis
+        }

@@ -2,218 +2,382 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Trader AI</title>
+<title>StockScope AI</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
 <style>
-/* 🔒 YOUR UI — UNCHANGED */
-:root {
-  --bg:#0b0f1a;--card:#12182b;--primary:#4f7cff;
-  --text:#e6e9f0;--muted:#9aa4bf;
-  --danger:#ff6b6b;--success:#4ade80;
+:root{
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --primary:#4f46e5;
+  --soft:#eef2ff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:#e5e7eb;
 }
+
 *{box-sizing:border-box;font-family:Inter,system-ui}
-body{margin:0;background:radial-gradient(circle at top,#111836,var(--bg));color:var(--text);min-height:100vh;display:flex;justify-content:center;padding:40px 16px}
-.app{width:100%;max-width:820px}
-.header{text-align:center;margin-bottom:28px}
-.card{background:linear-gradient(180deg,#151c35,var(--card));border-radius:14px;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
-.form{display:grid;grid-template-columns:1fr 1fr auto;gap:12px}
-input{background:#0f1430;border:1px solid rgba(255,255,255,.1);color:var(--text);padding:14px;border-radius:10px}
-button{background:linear-gradient(135deg,var(--primary),#6f8cff);border:none;color:#fff;font-weight:600;padding:0 22px;border-radius:10px}
-.result{margin-top:22px;display:none}
-.section{margin-top:16px}
-.trade-box{background:#0f1430;border-radius:12px;padding:14px}
-.kv{display:grid;grid-template-columns:140px 1fr}
+
+body{
+  margin:0;
+  background:linear-gradient(180deg,#eef2ff,var(--bg));
+  color:var(--text);
+}
+
+/* ---------- HEADER ---------- */
+.topbar{
+  background:#fff;
+  border-bottom:1px solid var(--border);
+}
+
+.topbar-inner{
+  max-width:1400px;
+  margin:auto;
+  padding:16px 24px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+}
+
+.logo{
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  background:var(--primary);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:900;
+}
+
+.brand{
+  font-size:22px;
+  font-weight:900;
+}
+
+/* ---------- LAYOUT ---------- */
+.container{
+  max-width:1400px;
+  margin:auto;
+  padding:60px 24px;
+}
+
+/* ---------- SEARCH ---------- */
+.search-wrapper{
+  display:flex;
+  justify-content:center;
+  margin-bottom:40px;
+}
+
+.search-card{
+  width:100%;
+  max-width:720px;
+  background:var(--card);
+  border-radius:26px;
+  padding:32px;
+  box-shadow:0 30px 70px rgba(0,0,0,.12);
+}
+
+.search-row{
+  position:relative;
+}
+
+input{
+  width:100%;
+  padding:18px 22px;
+  font-size:16px;
+  border-radius:16px;
+  border:1px solid var(--border);
+}
+
+.dropdown{
+  position:absolute;
+  top:110%;
+  left:0;
+  right:0;
+  background:#fff;
+  border-radius:16px;
+  border:1px solid var(--border);
+  max-height:280px;
+  overflow:auto;
+  display:none;
+  z-index:10;
+}
+
+.item{
+  padding:14px 18px;
+  cursor:pointer;
+}
+
+.item:hover{background:#f1f5f9}
+
+.symbol{font-weight:700}
+.name{font-size:13px;color:var(--muted)}
+
+/* ---------- LOADER ---------- */
+.loader{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
+  margin:80px 0;
+  color:var(--muted);
+}
+
+.spinner{
+  width:26px;
+  height:26px;
+  border:3px solid #c7d2fe;
+  border-top-color:var(--primary);
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+/* ---------- CARDS ---------- */
+.card{
+  background:var(--card);
+  border-radius:24px;
+  padding:30px;
+  box-shadow:0 25px 60px rgba(0,0,0,.08);
+  margin-bottom:36px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:18px;
+  margin-top:22px;
+}
+
+.metric{
+  background:#f8fafc;
+  padding:18px;
+  border-radius:16px;
+}
+
+.metric label{
+  font-size:13px;
+  color:var(--muted);
+}
+
+.metric div{
+  font-size:18px;
+  font-weight:700;
+}
+
+/* ---------- TABLE ---------- */
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
+}
+
+th,td{
+  padding:12px;
+  border-bottom:1px solid var(--border);
+  font-size:14px;
+}
+
+th{color:var(--muted);text-align:left}
 </style>
 </head>
 
 <body>
-<div class="app">
-  <div class="header">
-    <h1>Trader AI</h1>
-    <p>AI-powered trading research</p>
-  </div>
 
-  <div class="card">
-    <div class="form">
-      <input id="symbol" placeholder="RELIANCE" />
-      <input id="horizon" placeholder="2–3 weeks" />
-      <button id="btn">Analyze</button>
-    </div>
-
-    <div id="result" class="result"></div>
+<!-- HEADER -->
+<div class="topbar">
+  <div class="topbar-inner" onclick="goHome()">
+    <div class="logo">SS</div>
+    <div class="brand">StockScope AI</div>
   </div>
 </div>
 
+<div class="container">
+
+<!-- SEARCH -->
+<div class="search-wrapper" id="searchSection">
+  <div class="search-card">
+    <div class="search-row">
+      <input id="search" placeholder="Search stock (e.g. TCS, Reliance)" />
+      <div id="dropdown" class="dropdown"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading" class="loader" style="display:none">
+  <div class="spinner"></div>
+  <div>Analyzing stock data…</div>
+</div>
+
+<!-- CONTENT -->
+<div id="content"></div>
+
+</div>
+
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("JS READY");
+const input=document.getElementById("search");
+const dropdown=document.getElementById("dropdown");
+const content=document.getElementById("content");
+const loading=document.getElementById("loading");
+let chart=null;
 
-  const btn = document.getElementById("btn");
-  const symbolInput = document.getElementById("symbol");
-  const horizonInput = document.getElementById("horizon");
-  const resultEl = document.getElementById("result");
+input.oninput=async()=>{
+  const q=input.value.trim();
+  dropdown.innerHTML="";
+  if(!q){dropdown.style.display="none";return;}
 
-  let chart = null;
+  const res=await fetch(`/api/search?q=${q}`);
+  const data=await res.json();
+  if(!data.length){dropdown.style.display="none";return;}
 
-  btn.addEventListener("click", async () => {
-    console.log("ANALYZE CLICKED");
-
-    const symbol = symbolInput.value.trim();
-    const horizon = horizonInput.value.trim() || "1";
-
-    if (!symbol) {
-      alert("Enter symbol");
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = "Analyzing…";
-
-    try {
-      // ---------- ANALYZE ----------
-      const res = await fetch("/api/analyze-symbol", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol, horizon })
-      });
-
-      if (!res.ok) {
-        throw new Error("Analyze API failed");
-      }
-
-      const data = await res.json();
-      console.log("ANALYSIS DATA", data);
-
-      renderResult(data);
-    } catch (e) {
-      console.error(e);
-      alert("Analyze failed – check console");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Analyze";
-    }
+  dropdown.style.display="block";
+  data.forEach(s=>{
+    const d=document.createElement("div");
+    d.className="item";
+    d.innerHTML=`<div class="symbol">${s.symbol}</div><div class="name">${s.name}</div>`;
+    d.onclick=()=>loadStock(s.symbol);
+    dropdown.appendChild(d);
   });
+};
 
-  function renderResult(d) {
-    resultEl.innerHTML = `
-      <div class="section">
-        <h3>Price Chart</h3>
-        <canvas id="priceChart" height="140"></canvas>
+async function loadStock(symbol){
+  dropdown.style.display="none";
+  content.innerHTML="";
+  loading.style.display="flex";
+  document.getElementById("searchSection").style.display="none";
+
+  const stock=await fetch(`/api/stock/${symbol}`).then(r=>r.json());
+  const ai=await fetch(`/api/ai/insights/${symbol}`).then(r=>r.json());
+  const chartData=await fetch(`/api/chart/${symbol}?period=1y`).then(r=>r.json());
+
+  loading.style.display="none";
+
+  content.innerHTML=`
+    <div class="card">
+      <h2>${stock.company.name} (${symbol})</h2>
+      <div style="font-size:20px;margin-top:6px">₹ ${stock.company.price}</div>
+
+      <div class="grid">
+        ${Object.entries(stock.metrics).map(([k,v])=>`
+          <div class="metric">
+            <label>${k.replace("_"," ").toUpperCase()}</label>
+            <div>${v??"—"}</div>
+          </div>`).join("")}
       </div>
+    </div>
 
-      <div class="section">
-        <h3>Summary</h3>
-        <div>${d.summary || "-"}</div>
-      </div>
+    <div class="card">
+      <canvas id="priceChart" height="110"></canvas>
+    </div>
 
-      <div class="section">
-        <h3>Trade Idea</h3>
-        <div class="trade-box">
-          <div class="kv"><div>Direction</div><div>${d.trade_idea.direction}</div></div>
-          <div class="kv"><div>Entry</div><div>${d.trade_idea.entry_zone}</div></div>
-          <div class="kv"><div>Stop</div><div>${d.trade_idea.stop_loss}</div></div>
-          <div class="kv"><div>Target</div><div>${d.trade_idea.target}</div></div>
-        </div>
-      </div>
-    `;
+    <div class="card">
+      <h3>Sector Overview</h3>
+      <p>${stock.company.sector || "—"} / ${stock.company.industry || "—"}</p>
+    </div>
 
-    resultEl.style.display = "block";
-    drawChart(d.symbol, d.trade_idea, horizonInput.value);
-  }
+    <div class="card">
+      <h3>Peer Comparison</h3>
+      <table>
+        <tr><th>Company</th><th>P/E</th><th>ROE</th></tr>
+        <tr><td>${stock.company.name}</td><td>${stock.metrics.pe??"—"}</td><td>${stock.metrics.roe??"—"}</td></tr>
+      </table>
+    </div>
 
-  async function drawChart(symbol, trade, horizon) {
-    const res = await fetch(
-      `/api/price-data?symbol=${encodeURIComponent(symbol)}&horizon=${encodeURIComponent(horizon || "1")}`
-    );
+    <div class="card">
+      <h3>AI Observations</h3>
+      <ul>${(ai.analysis.ai_observations||[]).map(i=>`<li>${i}</li>`).join("")}</ul>
+    </div>
+  `;
 
-    if (!res.ok) {
-      console.warn("Price API failed");
-      return;
-    }
+  renderChart(chartData);
+}
 
-    const data = await res.json();
-    if (!data.prices || data.prices.length === 0) {
-      console.warn("No price data");
-      return;
-    }
+function renderChart(data){
+  const ctx=document.getElementById("priceChart").getContext("2d");
+  if(chart) chart.destroy();
 
-    const labels = data.prices.map(p => p.time);
-    const prices = data.prices.map(p => p.close);
+  const gradient=ctx.createLinearGradient(0,0,0,320);
+  gradient.addColorStop(0,"rgba(79,70,229,0.30)");
+  gradient.addColorStop(1,"rgba(79,70,229,0.03)");
 
-    const toNum = v => {
-      if (!v) return null;
-      const n = parseFloat(v.toString().split("-")[0]);
-      return isNaN(n) ? null : n;
-    };
-
-    const entry = toNum(trade.entry_zone);
-    const stop = toNum(trade.stop_loss);
-    const target = toNum(trade.target);
-
-    const ctx = document.getElementById("priceChart").getContext("2d");
-
-    if (chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Price",
-            data: prices,
-            borderColor: "#4f7cff",
-            backgroundColor: "rgba(79,124,255,0.25)",
-            fill: true,
-            tension: 0.35,
-            pointRadius: 0
-          },
-          entry && {
-            label: "Entry",
-            data: prices.map(() => entry),
-            borderColor: "#facc15",
-            borderDash: [6,6],
-            pointRadius: 0
-          },
-          stop && {
-            label: "Stop",
-            data: prices.map(() => stop),
-            borderColor: "#ff6b6b",
-            borderDash: [6,6],
-            pointRadius: 0
-          },
-          target && {
-            label: "Target",
-            data: prices.map(() => target),
-            borderColor: "#4ade80",
-            borderDash: [6,6],
-            pointRadius: 0
-          }
-        ].filter(Boolean)
-      },
-      options: {
-        plugins: {
-          legend: {
-            labels: { color: "#9aa4bf" }
-          }
+  chart=new Chart(ctx,{
+    type:"line",
+    data:{
+      labels:data.dates,
+      datasets:[
+        {
+          label:"Price",
+          data:data.price,
+          borderColor:"#4f46e5",
+          backgroundColor:gradient,
+          fill:true,
+          tension:.35,
+          pointRadius:0,
+          borderWidth:3
         },
-        scales: {
-          x: {
-            ticks: { color: "#6b7395" },
-            grid: { display: false }
-          },
-          y: {
-            ticks: { color: "#6b7395" },
-            grid: { color: "rgba(255,255,255,0.05)" }
+        {
+          label:"50 DMA",
+          data:data.dma50,
+          borderColor:"#22c55e",
+          borderDash:[6,4],
+          tension:.35,
+          pointRadius:0,
+          borderWidth:2
+        },
+        {
+          label:"200 DMA",
+          data:data.dma200,
+          borderColor:"#ef4444",
+          borderDash:[6,4],
+          tension:.35,
+          pointRadius:0,
+          borderWidth:2
+        }
+      ]
+    },
+    options:{
+      plugins:{
+        legend:{labels:{font:{weight:"600"}}},
+        tooltip:{
+          backgroundColor:"#0f172a",
+          callbacks:{
+            label:(ctx)=>`₹ ${ctx.parsed.y}`
           }
         }
+      },
+      scales:{
+        x:{
+          type:"time",
+          time:{unit:"month", tooltipFormat:"MMM yyyy"},
+          grid:{display:false},
+          ticks:{maxRotation:0, autoSkip:true}
+        },
+        y:{
+          grid:{color:"rgba(148,163,184,0.15)"},
+          ticks:{callback:v=>"₹ "+v}
+        }
       }
-    });
-  }
-});
+    }
+  });
+}
+
+function goHome(){
+  content.innerHTML="";
+  input.value="";
+  loading.style.display="none";
+  document.getElementById("searchSection").style.display="flex";
+}
 </script>
 </body>
 </html>
