@@ -2,382 +2,421 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>StockScope AI</title>
+<title>StockScope AI — Intelligent Stock Analysis</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 
 <style>
 :root{
-  --bg:#f5f7fb;
-  --card:#ffffff;
+  --bg:#f6f8ff;
+  --surface:#ffffff;
   --primary:#4f46e5;
-  --soft:#eef2ff;
-  --text:#0f172a;
-  --muted:#64748b;
+  --secondary:#38bdf8;
+  --accent:#10b981;
+  --text:#1f2937;
+  --muted:#6b7280;
   --border:#e5e7eb;
+  --glow:rgba(79,70,229,.25);
 }
 
 *{box-sizing:border-box;font-family:Inter,system-ui}
 
 body{
   margin:0;
-  background:linear-gradient(180deg,#eef2ff,var(--bg));
+  background:
+    radial-gradient(1200px 600px at top left,#eef2ff,transparent),
+    radial-gradient(900px 500px at bottom right,#e0f2fe,transparent),
+    var(--bg);
   color:var(--text);
 }
 
-/* ---------- HEADER ---------- */
-.topbar{
-  background:#fff;
+/* HEADER */
+.header{
+  background:linear-gradient(180deg,#ffffffee,#ffffffcc);
+  backdrop-filter:blur(10px);
   border-bottom:1px solid var(--border);
+  position:sticky;
+  top:0;
+  z-index:50;
 }
-
-.topbar-inner{
+.header-inner{
   max-width:1400px;
   margin:auto;
   padding:16px 24px;
   display:flex;
+  justify-content:space-between;
   align-items:center;
-  gap:12px;
-  cursor:pointer;
 }
-
-.logo{
-  width:42px;
-  height:42px;
-  border-radius:12px;
-  background:var(--primary);
+.brand-wrap{
   display:flex;
   align-items:center;
-  justify-content:center;
-  color:#fff;
-  font-weight:900;
+  gap:12px;
 }
-
+.logo{
+  width:38px;height:38px;
+  background:url("/static/favicon.svg") center/contain no-repeat;
+}
 .brand{
   font-size:22px;
   font-weight:900;
 }
+.nav{
+  display:flex;
+  gap:24px;
+  font-size:14px;
+  color:var(--muted);
+}
+.nav span{cursor:pointer}
+.nav span:hover{color:var(--primary)}
 
-/* ---------- LAYOUT ---------- */
+/* LAYOUT */
 .container{
   max-width:1400px;
   margin:auto;
-  padding:60px 24px;
+  padding:90px 24px;
 }
 
-/* ---------- SEARCH ---------- */
-.search-wrapper{
+/* HERO */
+.hero{
+  display:grid;
+  grid-template-columns:1.3fr 1fr;
+  gap:72px;
+  align-items:center;
+}
+.hero h1{
+  font-size:58px;
+  line-height:1.05;
+}
+.hero p{
+  font-size:19px;
+  color:var(--muted);
+  margin:22px 0 34px;
+}
+.hero-tags{
   display:flex;
-  justify-content:center;
-  margin-bottom:40px;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.tag{
+  background:linear-gradient(135deg,#eef2ff,#e0e7ff);
+  color:var(--primary);
+  padding:10px 16px;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:600;
 }
 
+/* SEARCH CARD */
 .search-card{
-  width:100%;
-  max-width:720px;
-  background:var(--card);
-  border-radius:26px;
-  padding:32px;
-  box-shadow:0 30px 70px rgba(0,0,0,.12);
+  background:
+    linear-gradient(#fff,#fff) padding-box,
+    linear-gradient(135deg,#c7d2fe,#93c5fd) border-box;
+  border-radius:30px;
+  border:1px solid transparent;
+  padding:38px;
+  box-shadow:0 40px 90px rgba(79,70,229,.18);
 }
-
-.search-row{
-  position:relative;
-}
-
+.search-row{position:relative}
 input{
   width:100%;
-  padding:18px 22px;
+  padding:20px 22px;
   font-size:16px;
   border-radius:16px;
   border:1px solid var(--border);
 }
+input:focus{
+  outline:none;
+  border-color:var(--primary);
+}
 
+/* AUTOCOMPLETE */
 .dropdown{
   position:absolute;
   top:110%;
-  left:0;
-  right:0;
+  left:0;right:0;
   background:#fff;
-  border-radius:16px;
   border:1px solid var(--border);
+  border-radius:16px;
   max-height:280px;
   overflow:auto;
   display:none;
-  z-index:10;
+  z-index:30;
 }
-
 .item{
   padding:14px 18px;
   cursor:pointer;
 }
-
-.item:hover{background:#f1f5f9}
-
+.item:hover{background:#eef2ff}
 .symbol{font-weight:700}
 .name{font-size:13px;color:var(--muted)}
 
-/* ---------- LOADER ---------- */
-.loader{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:12px;
-  margin:80px 0;
+/* SECTIONS */
+.section{
+  margin:140px 0;
+}
+.section h2{
+  font-size:38px;
+  margin-bottom:18px;
+}
+.section p.lead{
+  max-width:720px;
   color:var(--muted);
+  font-size:17px;
 }
 
-.spinner{
-  width:26px;
-  height:26px;
-  border:3px solid #c7d2fe;
-  border-top-color:var(--primary);
-  border-radius:50%;
-  animation:spin 1s linear infinite;
+/* FEATURE CARDS */
+.features{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:28px;
+  margin-top:60px;
 }
-
-@keyframes spin{
-  to{transform:rotate(360deg)}
+.feature{
+  background:
+    linear-gradient(#fff,#fff) padding-box,
+    linear-gradient(135deg,#e0e7ff,#bae6fd) border-box;
+  border-radius:28px;
+  border:1px solid transparent;
+  padding:34px;
+  transition:all .3s ease;
 }
+.feature h3{margin-bottom:12px}
+.feature p{color:var(--muted);font-size:14px}
 
-/* ---------- CARDS ---------- */
-.card{
-  background:var(--card);
-  border-radius:24px;
-  padding:30px;
-  box-shadow:0 25px 60px rgba(0,0,0,.08);
-  margin-bottom:36px;
-}
-
-.grid{
+/* TRUST */
+.trust{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:18px;
-  margin-top:22px;
+  gap:28px;
+  margin-top:70px;
 }
-
-.metric{
-  background:#f8fafc;
-  padding:18px;
-  border-radius:16px;
+.trust div{
+  background:linear-gradient(180deg,#f8fafc,#eef2ff);
+  border-radius:24px;
+  padding:30px;
+  font-size:15px;
 }
+.trust strong{font-size:22px}
 
-.metric label{
-  font-size:13px;
-  color:var(--muted);
+/* FEEDBACK */
+.feedback{
+  background:
+    linear-gradient(#fff,#fff) padding-box,
+    linear-gradient(135deg,#c7d2fe,#99f6e4) border-box;
+  border-radius:36px;
+  border:1px solid transparent;
+  padding:54px;
 }
-
-.metric div{
-  font-size:18px;
-  font-weight:700;
+.feedback h3{
+  font-size:32px;
+  margin-bottom:8px;
 }
-
-/* ---------- TABLE ---------- */
-table{
+.feedback p{color:var(--muted)}
+.feedback textarea{
   width:100%;
-  border-collapse:collapse;
-  margin-top:16px;
+  min-height:120px;
+  margin-top:22px;
+  padding:16px;
+  border-radius:16px;
+  border:1px solid var(--border);
+}
+.feedback button{
+  margin-top:18px;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:#fff;
+  border:none;
+  padding:14px 26px;
+  border-radius:16px;
+  font-size:15px;
+  cursor:pointer;
 }
 
-th,td{
-  padding:12px;
-  border-bottom:1px solid var(--border);
-  font-size:14px;
+/* FOOTER */
+.footer{
+  background:linear-gradient(180deg,#ffffff,#f1f5ff);
+  border-top:1px solid var(--border);
+  padding:70px 24px;
 }
+.footer-inner{
+  max-width:1400px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr;
+  gap:40px;
+}
+.footer h4{margin-bottom:12px}
+.footer p,.footer span{color:var(--muted);font-size:14px}
 
-th{color:var(--muted);text-align:left}
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .hero h1{font-size:44px}
+  .footer-inner{grid-template-columns:1fr}
+}
 </style>
 </head>
 
 <body>
 
 <!-- HEADER -->
-<div class="topbar">
-  <div class="topbar-inner" onclick="goHome()">
-    <div class="logo">SS</div>
-    <div class="brand">StockScope AI</div>
+<div class="header">
+  <div class="header-inner">
+    <div class="brand-wrap">
+      <div class="logo"></div>
+      <div class="brand">StockScope AI</div>
+    </div>
+    <div class="nav">
+      <span>Markets</span>
+      <span>Analysis</span>
+      <span>Technology</span>
+      <span>About</span>
+    </div>
   </div>
 </div>
 
 <div class="container">
 
-<!-- SEARCH -->
-<div class="search-wrapper" id="searchSection">
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <h1>Clarity for Investors.<br> Intelligence for Markets.</h1>
+    <p>
+      StockScope AI helps you analyze Indian stocks using fundamentals,
+      technical trends, sector context, and AI-driven insights.
+    </p>
+    <div class="hero-tags">
+      <div class="tag">Live NSE Data</div>
+      <div class="tag">AI Insights</div>
+      <div class="tag">50 & 200 DMA</div>
+      <div class="tag">Sector Comparison</div>
+    </div>
+  </div>
+
   <div class="search-card">
     <div class="search-row">
-      <input id="search" placeholder="Search stock (e.g. TCS, Reliance)" />
+      <input id="search" placeholder="Search for a company" />
       <div id="dropdown" class="dropdown"></div>
     </div>
   </div>
 </div>
 
-<!-- LOADING -->
-<div id="loading" class="loader" style="display:none">
-  <div class="spinner"></div>
-  <div>Analyzing stock data…</div>
+<!-- FEATURES -->
+<div class="section">
+  <h2>Designed for serious market analysis</h2>
+  <p class="lead">
+    We surface signal over noise by combining price action, fundamentals,
+    and intelligent interpretation.
+  </p>
+
+  <div class="features">
+    <div class="feature hover-card">
+      <h3>Fundamental Strength</h3>
+      <p>Market cap, valuation ratios, ROE, and balance-sheet context.</p>
+    </div>
+    <div class="feature hover-card">
+      <h3>Technical Trends</h3>
+      <p>Charts with moving averages that reveal structure.</p>
+    </div>
+    <div class="feature hover-card">
+      <h3>AI Observations</h3>
+      <p>Automated qualitative insights generated per stock.</p>
+    </div>
+    <div class="feature hover-card">
+      <h3>Sector Context</h3>
+      <p>Understand performance relative to peers.</p>
+    </div>
+  </div>
 </div>
 
-<!-- CONTENT -->
-<div id="content"></div>
+<!-- TRUST -->
+<div class="section">
+  <h2>Built with reliability at its core</h2>
+  <div class="trust">
+    <div><strong>CSV-Driven Universe</strong><br>Validated stock coverage</div>
+    <div><strong>Live Market Data</strong><br>NSE prices via yFinance</div>
+    <div><strong>FastAPI Backend</strong><br>Scalable architecture</div>
+    <div><strong>AI-Ready System</strong><br>Built for future models</div>
+  </div>
+</div>
 
+<!-- FEEDBACK -->
+<div class="feedback">
+  <h3>Help us improve StockScope AI</h3>
+  <p>Share feedback, ideas, or feature requests.</p>
+  <textarea placeholder="Write your feedback here… (demo)"></textarea>
+  <button id="feedbackBtn">Send Feedback</button>
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-inner">
+    <div>
+      <h4>StockScope AI</h4>
+      <p>Intelligent stock analysis platform for Indian markets.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <span>Analysis</span><br>
+      <span>AI Insights</span><br>
+      <span>Sector Comparison</span>
+    </div>
+    <div>
+      <h4>Technology</h4>
+      <span>FastAPI</span><br>
+      <span>yFinance</span><br>
+      <span>Chart.js</span>
+    </div>
+  </div>
 </div>
 
 <script>
-const input=document.getElementById("search");
-const dropdown=document.getElementById("dropdown");
-const content=document.getElementById("content");
-const loading=document.getElementById("loading");
-let chart=null;
+document.addEventListener("DOMContentLoaded",()=>{
 
-input.oninput=async()=>{
-  const q=input.value.trim();
-  dropdown.innerHTML="";
-  if(!q){dropdown.style.display="none";return;}
+  // AUTOCOMPLETE (unchanged logic)
+  const input=document.getElementById("search");
+  const dropdown=document.getElementById("dropdown");
 
-  const res=await fetch(`/api/search?q=${q}`);
-  const data=await res.json();
-  if(!data.length){dropdown.style.display="none";return;}
+  input.oninput=async()=>{
+    const q=input.value.trim();
+    dropdown.innerHTML="";
+    if(!q){dropdown.style.display="none";return;}
 
-  dropdown.style.display="block";
-  data.forEach(s=>{
-    const d=document.createElement("div");
-    d.className="item";
-    d.innerHTML=`<div class="symbol">${s.symbol}</div><div class="name">${s.name}</div>`;
-    d.onclick=()=>loadStock(s.symbol);
-    dropdown.appendChild(d);
+    const res=await fetch(`/api/search?q=${q}`);
+    const data=await res.json();
+    if(!data.length){dropdown.style.display="none";return;}
+
+    dropdown.style.display="block";
+    data.forEach(s=>{
+      const d=document.createElement("div");
+      d.className="item";
+      d.innerHTML=`<div class="symbol">${s.symbol}</div><div class="name">${s.name}</div>`;
+      d.onclick=()=>location.href=`/static/stock.html?symbol=${s.symbol}`;
+      dropdown.appendChild(d);
+    });
+  };
+
+  // CARD HOVER INTERACTIONS
+  document.querySelectorAll(".hover-card").forEach(card=>{
+    card.addEventListener("mouseenter",()=>{
+      card.style.transform="translateY(-8px)";
+      card.style.boxShadow="0 30px 60px var(--glow)";
+    });
+    card.addEventListener("mouseleave",()=>{
+      card.style.transform="translateY(0)";
+      card.style.boxShadow="none";
+    });
   });
-};
 
-async function loadStock(symbol){
-  dropdown.style.display="none";
-  content.innerHTML="";
-  loading.style.display="flex";
-  document.getElementById("searchSection").style.display="none";
+  // FEEDBACK BUTTON DEMO
+  document.getElementById("feedbackBtn").onclick=()=>{
+    alert("Thanks for your feedback! (Demo only)");
+  };
 
-  const stock=await fetch(`/api/stock/${symbol}`).then(r=>r.json());
-  const ai=await fetch(`/api/ai/insights/${symbol}`).then(r=>r.json());
-  const chartData=await fetch(`/api/chart/${symbol}?period=1y`).then(r=>r.json());
-
-  loading.style.display="none";
-
-  content.innerHTML=`
-    <div class="card">
-      <h2>${stock.company.name} (${symbol})</h2>
-      <div style="font-size:20px;margin-top:6px">₹ ${stock.company.price}</div>
-
-      <div class="grid">
-        ${Object.entries(stock.metrics).map(([k,v])=>`
-          <div class="metric">
-            <label>${k.replace("_"," ").toUpperCase()}</label>
-            <div>${v??"—"}</div>
-          </div>`).join("")}
-      </div>
-    </div>
-
-    <div class="card">
-      <canvas id="priceChart" height="110"></canvas>
-    </div>
-
-    <div class="card">
-      <h3>Sector Overview</h3>
-      <p>${stock.company.sector || "—"} / ${stock.company.industry || "—"}</p>
-    </div>
-
-    <div class="card">
-      <h3>Peer Comparison</h3>
-      <table>
-        <tr><th>Company</th><th>P/E</th><th>ROE</th></tr>
-        <tr><td>${stock.company.name}</td><td>${stock.metrics.pe??"—"}</td><td>${stock.metrics.roe??"—"}</td></tr>
-      </table>
-    </div>
-
-    <div class="card">
-      <h3>AI Observations</h3>
-      <ul>${(ai.analysis.ai_observations||[]).map(i=>`<li>${i}</li>`).join("")}</ul>
-    </div>
-  `;
-
-  renderChart(chartData);
-}
-
-function renderChart(data){
-  const ctx=document.getElementById("priceChart").getContext("2d");
-  if(chart) chart.destroy();
-
-  const gradient=ctx.createLinearGradient(0,0,0,320);
-  gradient.addColorStop(0,"rgba(79,70,229,0.30)");
-  gradient.addColorStop(1,"rgba(79,70,229,0.03)");
-
-  chart=new Chart(ctx,{
-    type:"line",
-    data:{
-      labels:data.dates,
-      datasets:[
-        {
-          label:"Price",
-          data:data.price,
-          borderColor:"#4f46e5",
-          backgroundColor:gradient,
-          fill:true,
-          tension:.35,
-          pointRadius:0,
-          borderWidth:3
-        },
-        {
-          label:"50 DMA",
-          data:data.dma50,
-          borderColor:"#22c55e",
-          borderDash:[6,4],
-          tension:.35,
-          pointRadius:0,
-          borderWidth:2
-        },
-        {
-          label:"200 DMA",
-          data:data.dma200,
-          borderColor:"#ef4444",
-          borderDash:[6,4],
-          tension:.35,
-          pointRadius:0,
-          borderWidth:2
-        }
-      ]
-    },
-    options:{
-      plugins:{
-        legend:{labels:{font:{weight:"600"}}},
-        tooltip:{
-          backgroundColor:"#0f172a",
-          callbacks:{
-            label:(ctx)=>`₹ ${ctx.parsed.y}`
-          }
-        }
-      },
-      scales:{
-        x:{
-          type:"time",
-          time:{unit:"month", tooltipFormat:"MMM yyyy"},
-          grid:{display:false},
-          ticks:{maxRotation:0, autoSkip:true}
-        },
-        y:{
-          grid:{color:"rgba(148,163,184,0.15)"},
-          ticks:{callback:v=>"₹ "+v}
-        }
-      }
-    }
-  });
-}
-
-function goHome(){
-  content.innerHTML="";
-  input.value="";
-  loading.style.display="none";
-  document.getElementById("searchSection").style.display="flex";
-}
+});
 </script>
+
 </body>
 </html>

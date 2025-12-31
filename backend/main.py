@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import os
+from math import isnan
 
 app = FastAPI(title="StockScope AI")
 
@@ -26,12 +27,10 @@ stocks_df = pd.read_csv(CSV_PATH)
 stocks_df["symbol"] = stocks_df["symbol"].str.upper()
 stocks_df["name"] = stocks_df.get("name", "").fillna("")
 
-# ---- sector is OPTIONAL ----
 if "sector" not in stocks_df.columns:
     stocks_df["sector"] = "Unknown"
 else:
     stocks_df["sector"] = stocks_df["sector"].fillna("Unknown")
-
 
 STOCKS = stocks_df.to_dict(orient="records")
 VALID_SYMBOLS = {s["symbol"] for s in STOCKS}
@@ -50,7 +49,6 @@ def get_sector_peers(symbol: str, sector: str, limit: int = 6):
         .to_dict(orient="records")
     )
     return peers
-
 
 # ---------- UI ----------
 @app.get("/")
@@ -98,6 +96,33 @@ def get_stock(symbol: str):
         industry = info.get("industry") or "Unknown"
         peers = get_sector_peers(symbol, sector)
 
+        # ---------- Quarterly Results (PHASE 1) ----------
+        qf = ticker.quarterly_financials
+        quarterly_results = None
+
+        if qf is not None and not qf.empty:
+            qf = qf.iloc[:, :8]  # last 8 quarters
+
+            def safe_row(name):
+                if name not in qf.index:
+                    return []
+                return [
+                    round(v, 2) if pd.notna(v) else None
+                    for v in qf.loc[name].values
+                ]
+
+            quarterly_results = {
+                "currency": "INR Crores",
+                "quarters": [d.strftime("%b %Y") for d in qf.columns],
+                "rows": {
+                    "Sales": safe_row("Total Revenue"),
+                    "Expenses": safe_row("Total Expenses"),
+                    "Operating Profit": safe_row("Operating Income"),
+                    "Net Profit": safe_row("Net Income"),
+                    "EPS": safe_row("Diluted EPS"),
+                }
+            }
+
         return {
             "company": {
                 "name": info.get("longName"),
@@ -122,6 +147,7 @@ def get_stock(symbol: str):
                 "industry": industry,
                 "peers": peers,
             },
+            "quarterly_results": quarterly_results,
             "about": info.get("longBusinessSummary"),
         }
 
@@ -141,20 +167,17 @@ async def ai_insights(symbol: str):
     orchestrator = SymbolAnalysisOrchestrator()
     return await orchestrator.run(symbol)
 
-from math import isnan
-
+# ---------- Chart ----------
 @app.get("/api/chart/{symbol}")
 def chart_data(symbol: str, period: str = "1y"):
     try:
         ticker = yf.Ticker(symbol.upper() + ".NS")
-
         hist = ticker.history(period=period)
 
         if hist.empty:
             raise HTTPException(status_code=404, detail="No chart data")
 
         close = hist["Close"]
-
         dma50 = close.rolling(50).mean()
         dma200 = close.rolling(200).mean()
 
@@ -176,4 +199,3 @@ def chart_data(symbol: str, period: str = "1y"):
     except Exception as e:
         print("Chart API error:", e)
         raise HTTPException(status_code=500, detail="Failed to load chart")
-

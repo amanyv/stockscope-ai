@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Stock Analysis · StockScope AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+<style>
+:root{
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --primary:#4f46e5;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+}
+
+*{box-sizing:border-box;font-family:Inter,system-ui}
+body{
+  margin:0;
+  background:linear-gradient(180deg,#eef2ff,var(--bg));
+  color:var(--text);
+}
+
+.header{
+  background:#fff;
+  border-bottom:1px solid var(--border);
+}
+.header-inner{
+  max-width:1400px;
+  margin:auto;
+  padding:16px 24px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.logo{
+  width:36px;
+  height:36px;
+  background:url("/static/favicon.svg") center/contain no-repeat;
+}
+.brand{
+  font-size:20px;
+  font-weight:900;
+}
+
+.container{
+  max-width:1400px;
+  margin:auto;
+  padding:48px 24px;
+}
+
+.card{
+  background:var(--card);
+  border-radius:26px;
+  padding:32px;
+  box-shadow:0 18px 40px rgba(0,0,0,.08);
+  margin-bottom:36px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:18px;
+  margin-top:22px;
+}
+.metric{
+  background:#f9fafb;
+  border-radius:16px;
+  padding:18px;
+}
+.metric label{
+  font-size:13px;
+  color:var(--muted);
+}
+.metric div{
+  font-size:18px;
+  font-weight:700;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
+}
+th,td{
+  padding:12px;
+  border-bottom:1px solid var(--border);
+}
+th{color:var(--muted);text-align:left}
+
+.financial-table{
+  min-width:900px;
+}
+.financial-table th,
+.financial-table td{
+  text-align:right;
+}
+.financial-table th:first-child,
+.financial-table td:first-child{
+  text-align:left;
+  position:sticky;
+  left:0;
+  background:#f9fafb;
+  font-weight:600;
+}
+
+.loader{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
+  margin:80px 0;
+  color:var(--muted);
+}
+.spinner{
+  width:26px;
+  height:26px;
+  border:3px solid #c7d2fe;
+  border-top-color:var(--primary);
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo"></div>
+    <div class="brand">StockScope AI</div>
+  </div>
+</div>
+
+<div class="container">
+
+<div id="loading" class="loader">
+  <div class="spinner"></div>
+  <div>Loading stock analysis…</div>
+</div>
+
+<div id="content"></div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+
+  const content = document.getElementById("content");
+  const loading = document.getElementById("loading");
+  let chart = null;
+
+  const params = new URLSearchParams(window.location.search);
+  const symbol = params.get("symbol");
+
+  if(!symbol){
+    loading.innerHTML = "No stock selected.";
+    return;
+  }
+
+  const stock = await fetch(`/api/stock/${symbol}`).then(r=>r.json());
+  const ai = await fetch(`/api/ai/insights/${symbol}`).then(r=>r.json());
+  const chartData = await fetch(`/api/chart/${symbol}?period=1y`).then(r=>r.json());
+
+  loading.style.display="none";
+
+  content.innerHTML = `
+    <div class="card">
+      <h2>${stock.company.name} (${symbol})</h2>
+      <div style="font-size:22px;margin-top:6px">₹ ${stock.company.price}</div>
+
+      <div class="grid">
+        ${Object.entries(stock.metrics).map(([k,v])=>`
+          <div class="metric">
+            <label>${k.replace("_"," ").toUpperCase()}</label>
+            <div>${v ?? "—"}</div>
+          </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="card">
+      <canvas id="priceChart" height="120"></canvas>
+    </div>
+
+    ${stock.quarterly_results ? `
+    <div class="card">
+      <h3>Quarterly Results</h3>
+      <p style="color:var(--muted)">Consolidated figures (₹ Crores)</p>
+
+      <div style="overflow-x:auto">
+        <table class="financial-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              ${stock.quarterly_results.quarters.map(q=>`<th>${q}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${Object.entries(stock.quarterly_results.rows).map(([k,vals])=>`
+              <tr>
+                <td>${k}</td>
+                ${vals.map(v=>`<td>${v ?? "—"}</td>`).join("")}
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>` : ""}
+
+    <div class="card">
+      <h3>Sector Overview</h3>
+      <p>${stock.company.sector || "—"} / ${stock.company.industry || "—"}</p>
+    </div>
+
+    <div class="card">
+      <h3>AI Observations</h3>
+      <ul>${(ai.analysis.ai_observations||[]).map(i=>`<li>${i}</li>`).join("")}</ul>
+    </div>
+  `;
+
+  const ctx = document.getElementById("priceChart").getContext("2d");
+  const gradient = ctx.createLinearGradient(0,0,0,320);
+  gradient.addColorStop(0,"rgba(79,70,229,0.30)");
+  gradient.addColorStop(1,"rgba(79,70,229,0.03)");
+
+  chart = new Chart(ctx,{
+    type:"line",
+    data:{
+      labels:chartData.dates,
+      datasets:[
+        {
+          label:"Price",
+          data:chartData.price,
+          borderColor:"#4f46e5",
+          backgroundColor:gradient,
+          fill:true,
+          tension:.35,
+          pointRadius:0,
+          borderWidth:3
+        },
+        {
+          label:"50 DMA",
+          data:chartData.dma50,
+          borderColor:"#22c55e",
+          borderDash:[6,4],
+          pointRadius:0
+        },
+        {
+          label:"200 DMA",
+          data:chartData.dma200,
+          borderColor:"#ef4444",
+          borderDash:[6,4],
+          pointRadius:0
+        }
+      ]
+    }
+  });
+});
+</script>
+
+</body>
+</html>
