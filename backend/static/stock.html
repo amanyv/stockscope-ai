@@ -37,7 +37,6 @@
             color: var(--text);
         }
 
-        /* HEADER */
         .header {
             background: #fff;
             border-bottom: 1px solid var(--border);
@@ -89,14 +88,12 @@
             color: var(--primary);
         }
 
-        /* CONTAINER */
         .container {
             max-width: 1400px;
             margin: auto;
             padding: 32px 24px;
         }
 
-        /* SECTION */
         .section {
             background: #fff;
             border: 1px solid var(--border);
@@ -105,7 +102,6 @@
             margin-bottom: 24px;
         }
 
-        /* COMPANY HEADER */
         .company-header {
             display: flex;
             justify-content: space-between;
@@ -153,7 +149,6 @@
             color: var(--danger);
         }
 
-        /* SECTION TITLE */
         .section-title {
             font-size: 18px;
             font-weight: 600;
@@ -167,16 +162,11 @@
             margin: -16px 0 20px 0;
         }
 
-        /* METRICS TABLE - SCREENER STYLE */
         .metrics-table {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 0;
             border-top: 1px solid var(--border-light);
-        }
-
-        .metric-row {
-            display: contents;
         }
 
         .metric-cell {
@@ -208,7 +198,6 @@
             text-align: right;
         }
 
-        /* CHART */
         .chart-wrapper {
             margin-top: 20px;
             padding: 20px;
@@ -216,10 +205,70 @@
             border-radius: 8px;
         }
 
-        /* TABLE - CLEAN STYLE */
         .table-wrapper {
             overflow-x: auto;
             margin-top: 16px;
+        }
+
+        .quarterly-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            table-layout: auto;
+        }
+
+        .quarterly-table thead {
+            background: #fafbfc;
+        }
+
+        .quarterly-table th {
+            padding: 14px 10px;
+            text-align: right;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-light);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+            width: auto;
+        }
+
+        .quarterly-table th:first-child {
+            text-align: left;
+            width: 140px;
+            min-width: 140px;
+        }
+
+        .quarterly-table td {
+            padding: 14px 10px;
+            text-align: right;
+            color: var(--text);
+            border-bottom: 1px solid var(--border-light);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .quarterly-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            left: 0;
+            background: #fff;
+            z-index: 2;
+        }
+
+        .quarterly-table thead th:first-child {
+            position: sticky;
+            left: 0;
+            background: #fafbfc;
+            z-index: 3;
+        }
+
+        .quarterly-table tbody tr:hover {
+            background: #fafbfc;
+        }
+
+        .quarterly-table tbody tr:hover td:first-child {
+            background: #fafbfc;
         }
 
         .data-table {
@@ -307,7 +356,6 @@
             font-weight: 600;
         }
 
-        /* AI INSIGHTS */
         .insight-list {
             list-style: none;
             padding: 0;
@@ -334,39 +382,12 @@
             width: 20px;
         }
 
-        /* ABOUT TEXT */
         .about-content {
             line-height: 1.7;
             color: var(--text);
             font-size: 14px;
         }
 
-        /* LOADER */
-        .loader {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 16px;
-            margin: 100px 0;
-            color: var(--text-light);
-        }
-
-        .spinner {
-            width: 28px;
-            height: 28px;
-            border: 3px solid var(--border);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* NO DATA */
         .no-data {
             padding: 40px;
             text-align: center;
@@ -377,7 +398,6 @@
             margin-top: 16px;
         }
 
-        /* RESPONSIVE */
         @media (max-width: 900px) {
             .company-header {
                 flex-direction: column;
@@ -400,7 +420,6 @@
 </head>
 
 <body>
-    <!-- HEADER -->
     <div class="header">
         <div class="header-inner">
             <div class="brand-wrap">
@@ -411,49 +430,60 @@
         </div>
     </div>
 
-    <div class="container">
-        <!-- LOADING -->
-        <div id="loading" class="loader">
-            <div class="spinner"></div>
-            <div>Loading stock analysis…</div>
-        </div>
-
-        <!-- CONTENT -->
-        <div id="content"></div>
-    </div>
+    <div class="container" id="content"></div>
 
     <script>
+        function formatNumber(num) {
+            if (num === null || num === undefined || num === "—" || num === "") return "—";
+            if (typeof num === 'string' && /[^0-9.\-,]/.test(num.replace(/,/g, ''))) return num;
+            const value = typeof num === 'string' ? parseFloat(num.replace(/,/g, '')) : num;
+            if (isNaN(value)) return "—";
+            return value.toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+        }
+
+        function formatCrores(num) {
+            if (num === null || num === undefined || num === "—" || num === "") return "—";
+            const value = typeof num === 'string' ? parseFloat(num.replace(/,/g, '')) : num;
+            if (isNaN(value)) return "—";
+            let croreValue = value;
+            if (value > 100000) {
+                croreValue = value / 10000000;
+            }
+            return croreValue.toLocaleString('en-IN', { maximumFractionDigits: 0, minimumFractionDigits: 0 });
+        }
+
+        function formatPercentage(num) {
+            if (num === null || num === undefined || num === "—" || num === "") return "—";
+            const value = typeof num === 'string' ? parseFloat(num.replace(/,/g, '').replace('%', '')) : num;
+            if (isNaN(value)) return "—";
+            return formatNumber(value) + "%";
+        }
+
         document.addEventListener("DOMContentLoaded", async () => {
             const content = document.getElementById("content");
-            const loading = document.getElementById("loading");
-
             const params = new URLSearchParams(window.location.search);
             const symbol = params.get("symbol");
 
             if (!symbol) {
-                loading.innerHTML = "<div style='color:var(--text-light)'>No stock selected.</div>";
+                content.innerHTML = "<div class='no-data'>No stock selected.</div>";
                 return;
             }
 
             try {
-                const stock = await fetch(`/api/stock/${symbol}`).then((r) => r.json());
+                // FETCH ALL DATA IN PARALLEL
+                const [stock, aiResult, chartResult] = await Promise.all([
+                    fetch(`/api/stock/${symbol}`).then(r => r.json()),
+                    fetch(`/api/ai/insights/${symbol}`).then(r => r.json()).catch(() => ({ analysis: { ai_observations: [] } })),
+                    fetch(`/api/chart/${symbol}?period=1y`).then(r => r.json())
+                ]);
 
-                let ai = { analysis: { ai_observations: [] } };
-                try {
-                    ai = await fetch(`/api/ai/insights/${symbol}`).then((r) => r.json());
-                } catch (e) {
-                    console.log("AI insights not available");
-                }
-
-                const chartData = await fetch(`/api/chart/${symbol}?period=1y`).then((r) => r.json());
-
-                loading.style.display = "none";
-
+                const chartData = chartResult;
+                const ai = aiResult;
                 const changeClass = stock.company.change_pct >= 0 ? 'positive' : 'negative';
                 const changeSymbol = stock.company.change_pct >= 0 ? '▲' : '▼';
 
+                // RENDER ALL CONTENT AT ONCE - ORIGINAL ORDER
                 content.innerHTML = `
-    <!-- COMPANY OVERVIEW -->
     <div class="section">
         <div class="company-header">
             <div>
@@ -461,31 +491,32 @@
                 <p class="company-subtitle">${stock.company.sector} / ${stock.company.industry}</p>
             </div>
             <div class="price-info">
-                <div class="price-large">₹${stock.company.price}</div>
-                <div class="price-change ${changeClass}">${changeSymbol} ${Math.abs(stock.company.change_pct)}%</div>
+                <div class="price-large">₹${formatNumber(stock.company.price)}</div>
+                <div class="price-change ${changeClass}">${changeSymbol} ${formatNumber(Math.abs(stock.company.change_pct))}%</div>
             </div>
         </div>
 
         <h3 class="section-title">Key Metrics</h3>
-
         <div class="metrics-table">
             ${Object.entries(stock.metrics)
-                        .map(([k, v]) => {
-                            let displayValue = v ?? "—";
-                            if (v && (k === "roe" || k === "roce" || k === "dividend_yield")) {
-                                displayValue = `${v}%`;
-                            }
-                            return `
+                .map(([k, v]) => {
+                    let displayValue = "—";
+                    if (v !== null && v !== undefined) {
+                        if (k === "roe" || k === "roce" || k === "dividend_yield") {
+                            displayValue = formatPercentage(v);
+                        } else {
+                            displayValue = formatNumber(v);
+                        }
+                    }
+                    return `
             <div class="metric-cell">
                 <span class="metric-label">${k.replace(/_/g, " ").toUpperCase()}</span>
                 <span class="metric-value">${displayValue}</span>
             </div>`;
-                        })
-                        .join("")}
+                }).join("")}
         </div>
     </div>
 
-    <!-- PRICE CHART -->
     <div class="section">
         <h3 class="section-title">Price Chart</h3>
         <p class="section-subtitle">1-year price movement with 50 & 200 DMA</p>
@@ -494,14 +525,12 @@
         </div>
     </div>
 
-    <!-- QUARTERLY RESULTS -->
     ${stock.quarterly_results ? `
     <div class="section">
         <h3 class="section-title">Quarterly Results</h3>
         <p class="section-subtitle">Consolidated figures (₹ Crores)</p>
-
         <div class="table-wrapper">
-            <table class="data-table">
+            <table class="quarterly-table">
                 <thead>
                     <tr>
                         <th>Metric</th>
@@ -510,10 +539,10 @@
                 </thead>
                 <tbody>
                     ${Object.entries(stock.quarterly_results.rows)
-                            .map(([k, vals]) => `
+                        .map(([k, vals]) => `
                     <tr>
                         <td>${k}</td>
-                        ${vals.map((v) => `<td>${v ?? "—"}</td>`).join("")}
+                        ${vals.map((v) => `<td>${formatCrores(v)}</td>`).join("")}
                     </tr>
                     `).join("")}
                 </tbody>
@@ -521,16 +550,14 @@
         </div>
     </div>` : ""}
 
-    <!-- PEER COMPARISON -->
     <div class="section">
         <h3 class="section-title">Peer Comparison</h3>
         <p class="section-subtitle">Comprehensive financial comparison with quarterly metrics</p>
-
         ${!stock.company.is_listed
-                        ? `<div class="no-data">Peer comparison is available only for listed companies.</div>`
-                        : stock.sector_overview.peers.length === 0
-                            ? `<div class="no-data">No comparable peer companies found.</div>`
-                            : `
+            ? `<div class="no-data">Peer comparison is available only for listed companies.</div>`
+            : stock.sector_overview.peers.length === 0
+                ? `<div class="no-data">No comparable peer companies found.</div>`
+                : `
         <div class="table-wrapper">
             <table class="data-table">
                 <thead>
@@ -553,60 +580,56 @@
                     <tr class="current-stock-row">
                         <td>1</td>
                         <td>${stock.company.name}</td>
-                        <td>${stock.company.price ?? "—"}</td>
-                        <td>${stock.metrics.pe ?? "—"}</td>
-                        <td>${stock.metrics.market_cap_cr ?? "—"}</td>
-                        <td>${stock.metrics.dividend_yield ?? "—"}</td>
-                        <td>${stock.metrics.roe ?? "—"}</td>
-                        <td>${stock.metrics.roce ?? "—"}</td>
-                        <td>${stock.quarterly_metrics?.quarterly_profit ?? "—"}</td>
+                        <td>${formatNumber(stock.company.price)}</td>
+                        <td>${formatNumber(stock.metrics.pe)}</td>
+                        <td>${formatNumber(stock.metrics.market_cap_cr)}</td>
+                        <td>${formatNumber(stock.metrics.dividend_yield)}</td>
+                        <td>${formatNumber(stock.metrics.roe)}</td>
+                        <td>${formatNumber(stock.metrics.roce)}</td>
+                        <td>${formatNumber(stock.quarterly_metrics?.quarterly_profit)}</td>
                         <td class="${(stock.quarterly_metrics?.quarterly_profit_growth ?? 0) >= 0 ? 'positive-value' : 'negative-value'}">
-                            ${stock.quarterly_metrics?.quarterly_profit_growth ?? "—"}
+                            ${formatNumber(stock.quarterly_metrics?.quarterly_profit_growth)}
                         </td>
-                        <td>${stock.quarterly_metrics?.quarterly_revenue ?? "—"}</td>
+                        <td>${formatNumber(stock.quarterly_metrics?.quarterly_revenue)}</td>
                         <td class="${(stock.quarterly_metrics?.quarterly_revenue_growth ?? 0) >= 0 ? 'positive-value' : 'negative-value'}">
-                            ${stock.quarterly_metrics?.quarterly_revenue_growth ?? "—"}
+                            ${formatNumber(stock.quarterly_metrics?.quarterly_revenue_growth)}
                         </td>
                     </tr>
-
                     ${stock.sector_overview.peers
-                                .map((p, index) => {
-                                    const profitClass = (p.quarterly_profit_growth ?? 0) >= 0 ? 'positive-value' : 'negative-value';
-                                    const salesClass = (p.quarterly_revenue_growth ?? 0) >= 0 ? 'positive-value' : 'negative-value';
-
-                                    return `
+                        .map((p, index) => {
+                            const profitClass = (p.quarterly_profit_growth ?? 0) >= 0 ? 'positive-value' : 'negative-value';
+                            const salesClass = (p.quarterly_revenue_growth ?? 0) >= 0 ? 'positive-value' : 'negative-value';
+                            return `
                     <tr>
                         <td>${index + 2}</td>
                         <td>${p.name || p.symbol}</td>
-                        <td>${p.current_price ?? "—"}</td>
-                        <td>${p.pe ?? "—"}</td>
-                        <td>${p.market_cap_cr ?? "—"}</td>
-                        <td>${p.dividend_yield ?? "—"}</td>
-                        <td>${p.roe ?? "—"}</td>
-                        <td>${p.roce ?? "—"}</td>
-                        <td>${p.quarterly_profit ?? "—"}</td>
-                        <td class="${profitClass}">${p.quarterly_profit_growth ?? "—"}</td>
-                        <td>${p.quarterly_revenue ?? "—"}</td>
-                        <td class="${salesClass}">${p.quarterly_revenue_growth ?? "—"}</td>
+                        <td>${formatNumber(p.current_price)}</td>
+                        <td>${formatNumber(p.pe)}</td>
+                        <td>${formatNumber(p.market_cap_cr)}</td>
+                        <td>${formatNumber(p.dividend_yield)}</td>
+                        <td>${formatNumber(p.roe)}</td>
+                        <td>${formatNumber(p.roce)}</td>
+                        <td>${formatNumber(p.quarterly_profit)}</td>
+                        <td class="${profitClass}">${formatNumber(p.quarterly_profit_growth)}</td>
+                        <td>${formatNumber(p.quarterly_revenue)}</td>
+                        <td class="${salesClass}">${formatNumber(p.quarterly_revenue_growth)}</td>
                     </tr>
                     `;
-                                }).join("")}
+                        }).join("")}
                 </tbody>
             </table>
         </div>
         `}
     </div>
 
-    <!-- AI OBSERVATIONS -->
     <div class="section">
         <h3 class="section-title">AI Observations</h3>
         <p class="section-subtitle">Automated insights and analysis</p>
         ${(ai.analysis?.ai_observations?.length > 0)
-                        ? `<ul class="insight-list">${ai.analysis.ai_observations.map((i) => `<li class="insight-item">${i}</li>`).join("")}</ul>`
-                        : `<div class="no-data">AI analysis in progress...</div>`}
+            ? `<ul class="insight-list">${ai.analysis.ai_observations.map((i) => `<li class="insight-item">${i}</li>`).join("")}</ul>`
+            : `<div class="no-data">AI analysis in progress...</div>`}
     </div>
 
-    <!-- ABOUT -->
     ${stock.about ? `
     <div class="section">
         <h3 class="section-title">About ${stock.company.name}</h3>
@@ -615,132 +638,112 @@
     ` : ""}
   `;
 
-                // CHART
-                const ctx = document.getElementById("priceChart").getContext("2d");
-                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                gradient.addColorStop(0, "rgba(79,70,229,0.15)");
-                gradient.addColorStop(1, "rgba(79,70,229,0.01)");
+                // RENDER CHART
+                setTimeout(() => {
+                    const ctx = document.getElementById("priceChart")?.getContext("2d");
+                    if (!ctx) return;
 
-                new Chart(ctx, {
-                    type: "line",
-                    data: {
-                        labels: chartData.dates,
-                        datasets: [
-                            {
-                                label: "Price",
-                                data: chartData.price,
-                                borderColor: "#4f46e5",
-                                backgroundColor: gradient,
-                                fill: true,
-                                tension: 0.3,
-                                pointRadius: 0,
-                                borderWidth: 2,
-                            },
-                            {
-                                label: "50 DMA",
-                                data: chartData.dma50,
-                                borderColor: "#00b894",
-                                borderDash: [5, 3],
-                                pointRadius: 0,
-                                borderWidth: 1.5,
-                                fill: false,
-                            },
-                            {
-                                label: "200 DMA",
-                                data: chartData.dma200,
-                                borderColor: "#ff7675",
-                                borderDash: [5, 3],
-                                pointRadius: 0,
-                                borderWidth: 1.5,
-                                fill: false,
-                            },
-                        ],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false,
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                    gradient.addColorStop(0, "rgba(79,70,229,0.15)");
+                    gradient.addColorStop(1, "rgba(79,70,229,0.01)");
+
+                    new Chart(ctx, {
+                        type: "line",
+                        data: {
+                            labels: chartData.dates,
+                            datasets: [
+                                {
+                                    label: "Price",
+                                    data: chartData.price,
+                                    borderColor: "#4f46e5",
+                                    backgroundColor: gradient,
+                                    fill: true,
+                                    tension: 0.3,
+                                    pointRadius: 0,
+                                    borderWidth: 2,
+                                },
+                                {
+                                    label: "50 DMA",
+                                    data: chartData.dma50,
+                                    borderColor: "#00b894",
+                                    borderDash: [5, 3],
+                                    pointRadius: 0,
+                                    borderWidth: 1.5,
+                                    fill: false,
+                                },
+                                {
+                                    label: "200 DMA",
+                                    data: chartData.dma200,
+                                    borderColor: "#ff7675",
+                                    borderDash: [5, 3],
+                                    pointRadius: 0,
+                                    borderWidth: 1.5,
+                                    fill: false,
+                                },
+                            ],
                         },
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'top',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 15,
-                                    font: {
-                                        size: 12,
-                                        weight: '500'
-                                    },
-                                    color: '#636e72'
-                                }
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false,
-                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                titleColor: '#2d3436',
-                                bodyColor: '#636e72',
-                                borderColor: '#dfe6e9',
-                                borderWidth: 1,
-                                padding: 10,
-                                callbacks: {
-                                    label: function (context) {
-                                        let label = context.dataset.label || '';
-                                        if (label) {
-                                            label += ': ';
-                                        }
-                                        if (context.parsed.y !== null) {
-                                            label += '₹' + context.parsed.y.toFixed(2);
-                                        }
-                                        return label;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                type: 'time',
-                                time: {
-                                    unit: 'month',
-                                    displayFormats: {
-                                        month: 'MMM yyyy'
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 15,
+                                        font: { size: 12, weight: '500' },
+                                        color: '#636e72'
                                     }
                                 },
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    font: {
-                                        size: 11
-                                    },
-                                    color: '#95a5a6'
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    titleColor: '#2d3436',
+                                    bodyColor: '#636e72',
+                                    borderColor: '#dfe6e9',
+                                    borderWidth: 1,
+                                    padding: 10,
+                                    callbacks: {
+                                        label: function (context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) label += ': ';
+                                            if (context.parsed.y !== null) {
+                                                label += '₹' + context.parsed.y.toLocaleString('en-IN', {maximumFractionDigits: 2});
+                                            }
+                                            return label;
+                                        }
+                                    }
                                 }
                             },
-                            y: {
-                                grid: {
-                                    color: '#ecf0f1'
+                            scales: {
+                                x: {
+                                    type: 'time',
+                                    time: { unit: 'month', displayFormats: { month: 'MMM yyyy' } },
+                                    grid: { display: false },
+                                    ticks: { font: { size: 11 }, color: '#95a5a6' }
                                 },
-                                ticks: {
-                                    font: {
-                                        size: 11
-                                    },
-                                    color: '#95a5a6',
-                                    callback: function (value) {
-                                        return '₹' + value;
+                                y: {
+                                    grid: { color: '#ecf0f1' },
+                                    ticks: {
+                                        font: { size: 11 },
+                                        color: '#95a5a6',
+                                        callback: function (value) { 
+                                            return '₹' + value.toLocaleString('en-IN'); 
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                });
+                    });
+                }, 50);
 
             } catch (error) {
-                loading.innerHTML = `<div style="color:var(--danger);text-align:center">
-                    <h3>Error Loading Stock Data</h3>
-                    <p>${error.message}</p>
+                content.innerHTML = `<div class="no-data" style="color:var(--danger)">
+                    <strong>Error Loading Stock Data</strong><br>
+                    ${error.message}
                 </div>`;
                 console.error(error);
             }

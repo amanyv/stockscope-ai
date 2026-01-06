@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from backend.agents.orchestrator import SymbolAnalysisOrchestrator
+from agents.orchestrator import SymbolAnalysisOrchestrator
 import yfinance as yf
 from fastapi import Query
 import numpy as np
@@ -567,3 +567,4 @@ def chart_data(symbol: str, period: str = "1y"):
 def peer_stats():
     """Returns statistics about the peer database"""
     return peer_manager.get_stats()
+
